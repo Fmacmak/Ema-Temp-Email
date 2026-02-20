@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TempMail</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      width: 380px;
+      min-height: 500px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f0f13;
+      color: #e8e8f0;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #6c3fc5 0%, #3b82f6 100%);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header svg { flex-shrink: 0; }
+    .header h1 { font-size: 18px; font-weight: 700; letter-spacing: .3px; }
+    .header .sub { font-size: 11px; opacity: .75; }
+
+    /* ── Email box ── */
+    .email-section { padding: 14px 16px; border-bottom: 1px solid #1e1e2e; }
+    .email-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: #888; margin-bottom: 6px; }
+
+    .email-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #1a1a26;
+      border: 1px solid #2a2a3e;
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+    .email-addr {
+      flex: 1;
+      font-size: 13px;
+      font-weight: 600;
+      color: #a78bfa;
+      word-break: break-all;
+      user-select: all;
+    }
+    .email-addr.loading { color: #555; font-style: italic; font-weight: 400; }
+
+    .btn-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #888;
+      padding: 4px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      transition: color .15s, background .15s;
+    }
+    .btn-icon:hover { color: #e8e8f0; background: #2a2a3e; }
+    .btn-icon.copied { color: #4ade80; }
+
+    .actions { display: flex; gap: 8px; margin-top: 10px; }
+    .btn {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn-primary { background: #6c3fc5; color: #fff; }
+    .btn-primary:hover { opacity: .85; }
+    .btn-danger  { background: #3f1a1a; color: #f87171; border: 1px solid #5c2020; }
+    .btn-danger:hover  { background: #5c2020; }
+
+    /* ── Inbox ── */
+    .inbox-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px 6px;
+    }
+    .inbox-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: #888; }
+    .badge {
+      background: #6c3fc5;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 99px;
+    }
+    .refresh-btn {
+      background: none;
+      border: none;
+      color: #666;
+      cursor: pointer;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 6px;
+      border-radius: 4px;
+    }
+    .refresh-btn:hover { color: #a78bfa; background: #1a1a26; }
+    .refresh-btn.spinning svg { animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .inbox { overflow-y: auto; max-height: 280px; padding: 0 8px 8px; }
+
+    .empty {
+      text-align: center;
+      padding: 40px 20px;
+      color: #444;
+    }
+    .empty svg { margin-bottom: 10px; opacity: .4; }
+    .empty p { font-size: 13px; }
+    .empty small { font-size: 11px; }
+
+    /* ── Message card ── */
+    .msg-card {
+      background: #1a1a26;
+      border: 1px solid #2a2a3e;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .msg-card:hover { border-color: #6c3fc5; background: #1e1a30; }
+    .msg-card.unread { border-left: 3px solid #6c3fc5; }
+
+    .msg-from {
+      font-size: 12px;
+      font-weight: 700;
+      color: #c4b5fd;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .msg-subject {
+      font-size: 12px;
+      color: #d0d0e0;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .msg-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 4px;
+    }
+    .msg-preview { font-size: 11px; color: #555; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .msg-time { font-size: 10px; color: #444; flex-shrink: 0; margin-left: 8px; }
+
+    /* ── Detail panel ── */
+    #detail-panel {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: #0f0f13;
+      overflow-y: auto;
+      z-index: 10;
+    }
+    .detail-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid #1e1e2e;
+      position: sticky;
+      top: 0;
+      background: #0f0f13;
+    }
+    .back-btn {
+      background: none;
+      border: none;
+      color: #a78bfa;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .detail-subject { font-size: 13px; font-weight: 700; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .detail-meta { padding: 10px 14px; font-size: 11px; color: #666; border-bottom: 1px solid #1e1e2e; }
+    .detail-meta span { color: #999; }
+    .detail-body { padding: 14px; font-size: 13px; line-height: 1.6; color: #ccc; white-space: pre-wrap; word-break: break-word; }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #4ade80;
+      color: #000;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      opacity: 0;
+      transition: opacity .2s, transform .2s;
+      pointer-events: none;
+      z-index: 100;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ── Main view ── -->
+<div id="main-view">
+
+  <div class="header">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="6" fill="white" fill-opacity=".15"/>
+      <path d="M4 8l8 5 8-5M4 8h16v10H4V8z" stroke="white" stroke-width="1.6" stroke-linejoin="round"/>
+    </svg>
+    <div>
+      <h1>TempMail</h1>
+      <div class="sub">Disposable inbox, zero fuss</div>
+    </div>
+  </div>
+
+  <div class="email-section">
+    <div class="email-label">Your temporary address</div>
+    <div class="email-row">
+      <div class="email-addr loading" id="email-display">Generating…</div>
+      <button class="btn-icon" id="copy-btn" title="Copy address">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+        </svg>
+      </button>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" id="new-addr-btn">⚡ New Address</button>
+      <button class="btn btn-danger"  id="delete-btn">🗑 Delete</button>
+    </div>
+  </div>
+
+  <div class="inbox-header">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="inbox-title">Inbox</span>
+      <span class="badge" id="msg-count">0</span>
+    </div>
+    <button class="refresh-btn" id="refresh-btn">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 005.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 013.51 15"/>
+      </svg>
+      Refresh
+    </button>
+  </div>
+
+  <div class="inbox" id="inbox"></div>
+</div>
+
+<!-- ── Detail view ── -->
+<div id="detail-panel">
+  <div class="detail-toolbar">
+    <button class="back-btn" id="back-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+      Back
+    </button>
+    <div class="detail-subject" id="detail-subject"></div>
+  </div>
+  <div class="detail-meta" id="detail-meta"></div>
+  <div class="detail-body" id="detail-body"></div>
+</div>
+
+<div id="toast">Copied!</div>
+
+<script src="popup.js"></script>
+</body>
+</html>
