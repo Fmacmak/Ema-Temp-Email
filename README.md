@@ -1,4 +1,4 @@
-# TempMail Chrome Extension
+# Ema TempMail Chrome Extension
 
 TempMail is a lightweight Chrome extension that allows you to instantly generate temporary email addresses and receive messages directly within your browser. It helps you protect your primary email from spam, bots, and phishing by providing disposable email addresses for one-time use.
 
